@@ -6,7 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// IMPORTANT: serve frontend
 app.use(express.static("public"));
+
+// FIX: homepage route
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html");
+});
 
 let players = {};
 
@@ -14,7 +20,7 @@ io.on("connection", (socket) => {
 
   socket.on("join", (name) => {
     players[socket.id] = {
-      name,
+      name: name || "Player",
       score: 0,
       shots: 0,
       hits: 0
@@ -25,13 +31,13 @@ io.on("connection", (socket) => {
 
   socket.on("shoot", (hit) => {
     let p = players[socket.id];
-    if(!p) return;
+    if (!p) return;
 
     p.shots++;
 
-    if(hit){
+    if (hit) {
       p.hits++;
-      p.score += 50;
+      p.score += 10;
     }
 
     io.emit("update", players);
@@ -44,6 +50,9 @@ io.on("connection", (socket) => {
 
 });
 
-server.listen(3000, () => {
-  console.log("Server running");
+// FIX: Railway port handling
+const PORT = process.env.PORT || 8080;
+
+server.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
